@@ -1,9 +1,11 @@
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /app
+COPY main.go .
+RUN go build -o proxy main.go
+
 FROM alpine:latest
-
-COPY gost /usr/local/bin/gost
-RUN chmod +x /usr/local/bin/gost
-
-# 声明容器内服务监听的端口（仅作文档用途）
+WORKDIR /root/
+COPY --from=builder /app/proxy .
 EXPOSE 7860
-
-CMD ["/usr/local/bin/gost", "-L", "admin:12332100@:7860"]
+CMD ["./proxy"]
