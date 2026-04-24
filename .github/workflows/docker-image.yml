@@ -1,37 +1,36 @@
-name: Manual Build and Push GOST Docker Image
+name: Manual Build to GHCR
 
 on:
   workflow_dispatch:
     inputs:
       image_name:
-        description: 'Docker 镜像名称 (例如: yourname/gost)'
+        description: '镜像全名 (例如: ghcr.io/你的用户名/gost)'
         required: true
-        default: 'your-dockerhub-username/gost'
+        default: 'ghcr.io/yourname/gost'
       tag:
         description: '镜像标签'
-        required: false
+        required: true
         default: 'latest'
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Log in to Docker Hub
+      - uses: actions/checkout@v4
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
-
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ github.event.inputs.image_name }}:${{ github.event.inputs.tag }}
+          tags: ${{ inputs.image_name }}:${{ inputs.tag }}
